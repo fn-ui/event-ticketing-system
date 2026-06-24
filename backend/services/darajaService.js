@@ -144,7 +144,7 @@ export const stkPushService =
               formattedPhone,
  
             CallBackURL:
-            "https://freehand-onslaught-clapping.ngrok-free.app/api/daraja/callback",
+          "https://event-ticketing-system-cror.onrender.com/api/daraja/callback",
             AccountReference:
               "EventPay",
 

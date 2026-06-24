@@ -57,10 +57,10 @@ export const createPaypalOrder =
               "PAY_NOW",
 
             return_url:
-              "http://localhost:5173/paypal-success",
+              "https://event-ticketing-system-lovat.vercel.app/paypal-success",
 
             cancel_url:
-              "http://localhost:5173/paypal-cancel",
+              "https://event-ticketing-system-lovat.vercel.app/paypal-cancel",
           },
       });
 
