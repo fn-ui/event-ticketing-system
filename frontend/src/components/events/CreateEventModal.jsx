@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { X } from "lucide-react";
-
+import { supabase } from "../../lib/supabase";
+import { createEvent } from "../../services/eventService";
 function CreateEventModal({
   isOpen,
   onClose,
-  onCreate,
+  onSuccess,
 }) {
   const [formData, setFormData] = useState({
     title: "",
@@ -51,14 +52,25 @@ const handleSubmit = async (e) => {
       imageUrl = data.publicUrl;
     }
 
-    await onCreate({
-      title: formData.title,
-      location: formData.location,
-      date: formData.date,
-      price: Number(formData.price),
-      image: imageUrl,
-      description: formData.description,
-    });
+          const newEvent = {
+        title: formData.title,
+        location: formData.location,
+        date: formData.date,
+        price: Number(formData.price),
+        image: imageUrl,
+        description: formData.description,
+        tickets_available: Number(
+       formData.tickets_available
+         ),
+      };
+
+      await createEvent(newEvent);
+
+      if (onSuccess) {
+        onSuccess();
+      }
+
+      onClose();
 
     setFormData({
       title: "",
@@ -67,6 +79,7 @@ const handleSubmit = async (e) => {
       price: "",
       image: null,
       description: "",
+      tickets_available: "",
     });
 
     onClose();

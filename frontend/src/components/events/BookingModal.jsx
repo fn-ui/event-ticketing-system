@@ -316,8 +316,7 @@ function BookingModal({
 
           await reduceTickets(
             event.id,
-            event.tickets_available -
-              tickets
+            tickets
           );
 
           const authorizationUrl =
@@ -355,8 +354,8 @@ function BookingModal({
     };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-2xl rounded-[32px] bg-white p-8">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 p-4">
+  <div className="max-h-[95vh] w-full max-w-2xl overflow-y-auto rounded-[32px] bg-white p-6 md:p-8">
         {/* HEADER */}
 
         <div className="flex items-center justify-between">

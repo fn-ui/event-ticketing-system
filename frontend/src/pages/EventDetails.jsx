@@ -179,16 +179,18 @@ function EventDetails() {
 
       {/* MODAL */}
       {showBookingModal && (
-        <BookingModal
-          event={event}
-          onClose={() =>
-            setShowBookingModal(false)
-          }
-          onProceed={
-            handleProceedPayment
-          }
-        />
-      )}
+          <BookingModal
+            event={event}
+            onClose={() => {
+              setShowBookingModal(false);
+
+              fetchEvents();
+            }}
+            onProceed={
+              handleProceedPayment
+            }
+          />
+        )}
     </MainLayout>
   );
 }

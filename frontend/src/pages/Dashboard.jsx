@@ -186,7 +186,7 @@ function Dashboard() {
                           KES
                           {" "}
                           {
-                            booking.amount
+                             booking.total_amount
                           }
                         </h3>
 

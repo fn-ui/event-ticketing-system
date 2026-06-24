@@ -241,7 +241,7 @@ function AdminBookings() {
                         <td className="px-8 py-6 font-bold text-violet-700">
                           KSh{" "}
                           {
-                            booking.amount
+                             booking.total_amount
                           }
                         </td>
 

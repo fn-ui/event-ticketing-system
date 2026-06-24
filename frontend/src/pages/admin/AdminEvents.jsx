@@ -9,6 +9,7 @@ import EditEventModal from "../../components/events/EditEventModal";
 import {
   deleteEvent,
   getEvents,
+  updateEvent,
 } from "../../services/eventService";
 
 import {
@@ -71,7 +72,32 @@ function AdminEvents() {
       alert(error.message);
     }
   }
+ async function handleUpdateEvent(
+  updatedEvent
+) {
+  try {
+    const {
+      id,
+      imageFile,
+      ...eventData
+    } = updatedEvent;
 
+    await updateEvent(
+      id,
+      eventData
+    );
+
+    fetchEvents();
+
+    setOpenEdit(false);
+  } catch (error) {
+    console.error(error);
+
+    alert(
+      "Failed to update event"
+    );
+  }
+}
   return (
     <AdminLayout>
       <div className="space-y-10">
@@ -235,12 +261,10 @@ function AdminEvents() {
               false
             )
           }
-          event={
-            selectedEvent
-          }
-          onSuccess={
-            fetchEvents
-          }
+          selectedEvent={
+          selectedEvent
+            }
+          onUpdate={handleUpdateEvent}
         />
       </div>
     </AdminLayout>

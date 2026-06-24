@@ -98,8 +98,25 @@ export const createPayment =
 export const reduceTickets =
   async (
     eventId,
-    remainingTickets
+    ticketsBooked
   ) => {
+    /* GET CURRENT EVENT */
+
+    const {
+      data: event,
+      error: fetchError,
+    } = await supabase
+      .from("events")
+      .select("*")
+      .eq("id", eventId)
+      .single();
+
+    if (fetchError) {
+      throw fetchError;
+    }
+
+    /* UPDATE EVENT */
+
     const {
       data,
       error,
@@ -107,10 +124,16 @@ export const reduceTickets =
       .from("events")
       .update({
         tickets_available:
-          remainingTickets,
+          event.tickets_available -
+          ticketsBooked,
+
+        tickets_sold:
+          (event.tickets_sold ||
+            0) + ticketsBooked,
       })
       .eq("id", eventId)
-      .select();
+      .select()
+      .single();
 
     if (error) {
       throw error;

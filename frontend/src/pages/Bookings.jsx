@@ -196,7 +196,7 @@ function Bookings() {
                             <h2 className="mt-1 text-3xl font-black">
                               KES{" "}
                               {
-                                booking.amount
+                                 booking.total_amount
                               }
                             </h2>
                           </div>

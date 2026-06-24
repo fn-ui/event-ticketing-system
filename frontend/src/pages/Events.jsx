@@ -256,17 +256,15 @@ function Events() {
 
       {/* BOOKING MODAL */}
       {selectedEvent && (
-        <BookingModal
-          event={
-            selectedEvent
-          }
-          onClose={() =>
-            setSelectedEvent(
-              null
-            )
-          }
-        />
-      )}
+  <BookingModal
+    event={selectedEvent}
+    onClose={() => {
+      setSelectedEvent(null);
+
+      fetchEvents();
+    }}
+  />
+)}
     </MainLayout>
   );
 }
