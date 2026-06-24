@@ -39,7 +39,7 @@ function PaypalSuccess() {
         try {
           const response =
             await axios.post(
-              "http://localhost:5000/api/paypal/capture",
+              "https://event-ticketing-system-cror.onrender.com/api/paypal/capture",
               {
                 orderID:
                   token,
