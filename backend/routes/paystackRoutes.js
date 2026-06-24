@@ -40,7 +40,7 @@ router.post(
               amount * 100,
 
             callback_url:
-              "http://localhost:5173/payment-success",
+              "https://event-ticketing-system-cror.onrender.com/payment-success",
           },
           {
             headers: {

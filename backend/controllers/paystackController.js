@@ -45,7 +45,7 @@ export const initializePaystack =
             amount,
 
             callback_url:
-              "http://localhost:5173/payment-success",
+              "https://event-ticketing-system-cror.onrender.com/payment-success",
           }
         );
 
