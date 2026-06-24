@@ -4,10 +4,10 @@ function AdminLayout({
   children,
 }) {
   return (
-    <div className="flex bg-slate-50">
+    <div className="bg-slate-50">
       <AdminSidebar />
 
-      <main className="flex-1 p-10">
+      <main className="ml-72 min-h-screen p-10">
         {children}
       </main>
     </div>

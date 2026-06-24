@@ -263,21 +263,20 @@ function AdminBookings() {
                           ).toLocaleDateString()}
                         </td>
 
+                        
                         {/* STATUS */}
-                        <td className="px-8 py-6">
-                          <span
-                            className={`inline-flex rounded-full px-4 py-2 text-sm font-bold ${
-                              booking.payment_status ===
-                              "paid"
-                                ? "bg-green-100 text-green-700"
-                                : "bg-yellow-100 text-yellow-700"
-                            }`}
-                          >
-                            {
-                              booking.payment_status
-                            }
-                          </span>
-                        </td>
+                      <td className="px-8 py-6">
+                        <span
+                          className={`inline-flex rounded-full px-4 py-2 text-sm font-bold ${
+                            booking.status ===
+                            "completed"
+                              ? "bg-green-100 text-green-700"
+                              : "bg-yellow-100 text-yellow-700"
+                          }`}
+                        >
+                          {booking.status}
+                        </span>
+                      </td>
                       </tr>
                     )
                   )

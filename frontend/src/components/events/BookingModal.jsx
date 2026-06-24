@@ -111,27 +111,29 @@ function BookingModal({
                   CREATE BOOKING FIRST
                 ======================================== */
 
-                const booking =
-                  await createBooking({
-                    user_id: user.id,
+                              const booking =
+                await createBooking({
+                  user_id: user.id,
 
-                    event_id: event.id,
+                  event_id: event.id,
 
+                  event_title:
+                    event.title,
+
+                  ticket_quantity:
                     tickets,
 
-                    total_amount:
-                      total,
+                  total_amount:
+                    total,
 
-                    payment_method:
-                      paymentMethod,
+                  payment_method:
+                    paymentMethod,
 
-                    payment_status:
-                      paymentMethod ===
-                      "Daraja"
-                        ? "pending"
-                        : "paid",
-                  });
+                  transaction_id:
+                    null,
 
+                  status: "completed",
+                });
                 /* ========================================
                   DARAJA PAYMENT
                 ======================================== */
@@ -176,7 +178,7 @@ function BookingModal({
             payment_method:
               "Daraja",
 
-            status: "pending",
+            status: "completed",
 
             transaction_id:
               paymentResponse
@@ -243,10 +245,9 @@ function BookingModal({
           /* REDUCE TICKETS */
 
           await reduceTickets(
-            event.id,
-            event.tickets_available -
-              tickets
-          );
+          event.id,
+          tickets
+            );
 
           const approvalUrl =
             paymentResponse?.data

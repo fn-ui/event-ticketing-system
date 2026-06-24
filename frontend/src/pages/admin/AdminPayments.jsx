@@ -99,11 +99,11 @@ function AdminPayments() {
     }, [payments]);
 
   const paidPayments =
-    payments.filter(
-      (payment) =>
-        payment.status ===
-        "paid"
-    ).length;
+  payments.filter(
+    (payment) =>
+      payment.status ===
+      "completed"
+  ).length;
 
   const pendingPayments =
     payments.filter(
@@ -358,7 +358,7 @@ function AdminPayments() {
                           <span
                             className={`inline-flex rounded-full px-4 py-2 text-sm font-bold ${
                               payment.status ===
-                              "paid"
+                              "completed"
                                 ? "bg-green-100 text-green-700"
                                 : "bg-yellow-100 text-yellow-700"
                             }`}

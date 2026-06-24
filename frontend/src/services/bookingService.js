@@ -11,11 +11,43 @@ export const createBooking =
       error,
     } = await supabase
       .from("bookings")
-      .insert([bookingData])
+      .insert([
+        {
+          user_id:
+            bookingData.user_id,
+
+          event_id:
+            bookingData.event_id,
+
+          event_title:
+            bookingData.event_title,
+
+          ticket_quantity:
+            bookingData.ticket_quantity,
+
+          payment_method:
+            bookingData.payment_method,
+
+          transaction_id:
+            bookingData.transaction_id,
+
+          total_amount:
+            bookingData.total_amount,
+
+          status:
+            bookingData.status ||
+            "pending",
+        },
+      ])
       .select()
       .single();
 
     if (error) {
+      console.error(
+        "Create booking error:",
+        error
+      );
+
       throw error;
     }
 
@@ -33,13 +65,30 @@ export const getUserBookings =
       error,
     } = await supabase
       .from("bookings")
-      .select("*")
+      .select(`
+        *,
+        profiles (
+          full_name,
+          email
+        ),
+        events (
+          title,
+          image,
+          location,
+          date
+        )
+      `)
       .eq("user_id", userId)
       .order("created_at", {
         ascending: false,
       });
 
     if (error) {
+      console.error(
+        "Get user bookings error:",
+        error
+      );
+
       throw error;
     }
 
@@ -57,12 +106,29 @@ export const getAllBookings =
       error,
     } = await supabase
       .from("bookings")
-      .select("*")
+      .select(`
+        *,
+        profiles (
+          full_name,
+          email
+        ),
+        events (
+          title,
+          image,
+          location,
+          date
+        )
+      `)
       .order("created_at", {
         ascending: false,
       });
 
     if (error) {
+      console.error(
+        "Get all bookings error:",
+        error
+      );
+
       throw error;
     }
 
@@ -80,11 +146,37 @@ export const createPayment =
       error,
     } = await supabase
       .from("payments")
-      .insert([paymentData])
+      .insert([
+        {
+          booking_id:
+            paymentData.booking_id,
+
+          user_id:
+            paymentData.user_id,
+
+          amount:
+            paymentData.amount,
+
+          payment_method:
+            paymentData.payment_method,
+
+          transaction_id:
+            paymentData.transaction_id,
+
+          status:
+            paymentData.status ||
+            "pending",
+        },
+      ])
       .select()
       .single();
 
     if (error) {
+      console.error(
+        "Create payment error:",
+        error
+      );
+
       throw error;
     }
 
@@ -112,7 +204,23 @@ export const reduceTickets =
       .single();
 
     if (fetchError) {
+      console.error(
+        "Fetch event error:",
+        fetchError
+      );
+
       throw fetchError;
+    }
+
+    /* PREVENT NEGATIVE TICKETS */
+
+    if (
+      event.tickets_available <
+      ticketsBooked
+    ) {
+      throw new Error(
+        "Not enough tickets available"
+      );
     }
 
     /* UPDATE EVENT */
@@ -136,6 +244,11 @@ export const reduceTickets =
       .single();
 
     if (error) {
+      console.error(
+        "Reduce tickets error:",
+        error
+      );
+
       throw error;
     }
 

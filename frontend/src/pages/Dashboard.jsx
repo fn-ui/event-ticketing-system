@@ -48,7 +48,7 @@ function Dashboard() {
       ) =>
         total +
         Number(
-          booking.amount
+          booking.total_amount
         ),
       0
     );
