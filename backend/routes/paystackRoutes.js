@@ -40,7 +40,7 @@ router.post(
               amount * 100,
 
             callback_url:
-              "https://event-ticketing-system-cror.onrender.com/payment-success",
+              "https://event-ticketing-system-lovat.vercel.app/payment-success",
           },
           {
             headers: {

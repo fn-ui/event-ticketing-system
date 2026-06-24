@@ -45,7 +45,7 @@ export const initializePaystack =
             amount,
 
             callback_url:
-              "https://event-ticketing-system-cror.onrender.com/payment-success",
+              "https://event-ticketing-system-lovat.vercel.app/payment-success",
           }
         );
 
