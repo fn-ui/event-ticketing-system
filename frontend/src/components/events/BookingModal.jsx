@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import {
   CreditCard,
   Loader2,
@@ -69,9 +70,9 @@ function BookingModal({
         !user ||
         !profile
       ) {
-        alert(
-          "Please login first"
-        );
+        toast.error(
+       "Please login first"
+         );
 
         return;
       }
@@ -84,7 +85,7 @@ function BookingModal({
                 event.tickets_available <=
                 0
               ) {
-                alert(
+                toast.error(
                   "This event is sold out"
                 );
 
@@ -95,7 +96,7 @@ function BookingModal({
                 tickets >
                 event.tickets_available
               ) {
-                alert(
+                toast.error(
                   `Only ${event.tickets_available} tickets remaining`
                 );
 
@@ -142,7 +143,7 @@ function BookingModal({
           "Daraja"
         ) {
           if (!phone) {
-            alert(
+            toast.error(
               "Enter M-Pesa phone number"
             );
 
@@ -186,7 +187,7 @@ function BookingModal({
                 ?.CheckoutRequestID,
           });
 
-          alert(
+          toast.success(
             "STK Push sent successfully. Check your phone and enter your M-Pesa PIN."
           );
 
@@ -343,7 +344,7 @@ function BookingModal({
       } catch (error) {
         console.error(error);
 
-        alert(
+        toast.error(
           error.response?.data
             ?.message ||
             error.message ||

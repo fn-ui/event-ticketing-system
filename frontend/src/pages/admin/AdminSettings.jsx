@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 import AdminLayout from "../../components/dashboard/AdminLayout";
-
+import toast from "react-hot-toast";
 import {
   Bell,
   Lock,
@@ -90,11 +90,11 @@ function AdminSettings() {
       if (error)
         throw error;
 
-      alert(
+      toast.success(
         "Profile updated successfully"
       );
     } catch (error) {
-      alert(error.message);
+      toast.error(error.message);
     } finally {
       setLoading(false);
     }
@@ -109,7 +109,7 @@ function AdminSettings() {
       passwordData.password !==
       passwordData.confirmPassword
     ) {
-      alert(
+      toast.error(
         "Passwords do not match"
       );
 
@@ -130,7 +130,7 @@ function AdminSettings() {
       if (error)
         throw error;
 
-      alert(
+      toast.success(
         "Password updated successfully"
       );
 
@@ -139,7 +139,7 @@ function AdminSettings() {
         confirmPassword: "",
       });
     } catch (error) {
-      alert(error.message);
+      toast.error(error.message);
     } finally {
       setLoading(false);
     }

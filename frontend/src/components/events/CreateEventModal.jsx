@@ -2,6 +2,7 @@ import { useState } from "react";
 import { X } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import { createEvent } from "../../services/eventService";
+import toast from "react-hot-toast";
 function CreateEventModal({
   isOpen,
   onClose,
@@ -85,7 +86,7 @@ const handleSubmit = async (e) => {
     onClose();
   } catch (error) {
     console.error(error);
-    alert("Failed to create event");
+    toast.error("Failed to create event");
   }
 };
 

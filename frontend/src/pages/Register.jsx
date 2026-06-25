@@ -1,5 +1,5 @@
 import { useState } from "react";
-
+import toast from "react-hot-toast";
 import {
   Link,
   useNavigate,
@@ -45,7 +45,7 @@ function Register() {
         !formData.password ||
         !formData.confirmPassword
       ) {
-        alert(
+        toast.error(
           "Please fill all fields"
         );
 
@@ -56,7 +56,7 @@ function Register() {
         formData.password !==
         formData.confirmPassword
       ) {
-        alert(
+        toast.error(
           "Passwords do not match"
         );
 
@@ -67,7 +67,7 @@ function Register() {
         formData.password.length <
         6
       ) {
-        alert(
+        toast.error(
           "Password must be at least 6 characters"
         );
 
@@ -86,13 +86,13 @@ function Register() {
             formData.password,
         });
 
-        alert(
+        toast.success(
           "Account created successfully"
         );
 
         navigate("/login");
       } catch (error) {
-        alert(
+        toast.error(
           error.message
         );
       } finally {

@@ -5,7 +5,7 @@ import AdminLayout from "../../components/dashboard/AdminLayout";
 import CreateEventModal from "../../components/events/CreateEventModal";
 
 import EditEventModal from "../../components/events/EditEventModal";
-
+import toast from "react-hot-toast";
 import {
   deleteEvent,
   getEvents,
@@ -69,7 +69,7 @@ function AdminEvents() {
 
       fetchEvents();
     } catch (error) {
-      alert(error.message);
+      toast.error(error.message);
     }
   }
  async function handleUpdateEvent(
@@ -93,7 +93,7 @@ function AdminEvents() {
   } catch (error) {
     console.error(error);
 
-    alert(
+    toast.error(
       "Failed to update event"
     );
   }

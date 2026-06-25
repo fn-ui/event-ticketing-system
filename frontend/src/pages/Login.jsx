@@ -1,5 +1,5 @@
 import { useState } from "react";
-
+import toast from "react-hot-toast";
 import {
   Link,
   useNavigate,
@@ -67,7 +67,7 @@ function Login() {
           );
         }
       } catch (error) {
-        alert(
+        toast.error(
           error.message
         );
       } finally {

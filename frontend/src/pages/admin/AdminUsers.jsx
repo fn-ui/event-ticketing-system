@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-
+import toast from "react-hot-toast";
 import AdminLayout from "../../components/dashboard/AdminLayout";
 
 import {
@@ -99,7 +99,7 @@ function AdminUsers() {
 
       fetchUsers();
     } catch (error) {
-      alert(error.message);
+      toast.error(error.message);
     }
   }
 
@@ -121,7 +121,7 @@ function AdminUsers() {
 
       fetchUsers();
     } catch (error) {
-      alert(error.message);
+      toast.error(error.message);
     }
   }
 

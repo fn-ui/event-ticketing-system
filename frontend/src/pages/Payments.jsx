@@ -1,5 +1,5 @@
 import { useState } from "react";
-
+import toast from "react-hot-toast";
 import { useLocation } from "react-router-dom";
 
 import {
@@ -68,7 +68,7 @@ function Payments() {
           !user ||
           !profile
         ) {
-          alert(
+          toast.error(
             "Please login first"
           );
 
@@ -116,7 +116,7 @@ function Payments() {
             2. Complete payment
           */
 
-          alert(
+          toast.success(
             "STK Push sent successfully. Please check your phone and enter your M-Pesa PIN to complete payment."
           );
 
@@ -218,7 +218,7 @@ function Payments() {
           error
         );
 
-        alert(
+        toast.error(
           error.response?.data
             ?.message ||
             error.message ||
