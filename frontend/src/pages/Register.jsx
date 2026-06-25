@@ -1,5 +1,5 @@
 import { useState } from "react";
-import toast from "react-hot-toast";
+
 import {
   Link,
   useNavigate,
@@ -27,6 +27,9 @@ function Register() {
   const [loading, setLoading] =
     useState(false);
 
+    const [error, setError] =
+  useState("");
+
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -38,14 +41,14 @@ function Register() {
   const handleSubmit =
     async (e) => {
       e.preventDefault();
-
+      setError("");
       if (
         !formData.fullName ||
         !formData.email ||
         !formData.password ||
         !formData.confirmPassword
       ) {
-        toast.error(
+        setError(
           "Please fill all fields"
         );
 
@@ -56,7 +59,7 @@ function Register() {
         formData.password !==
         formData.confirmPassword
       ) {
-        toast.error(
+        setError(
           "Passwords do not match"
         );
 
@@ -67,7 +70,7 @@ function Register() {
         formData.password.length <
         6
       ) {
-        toast.error(
+        setError(
           "Password must be at least 6 characters"
         );
 
@@ -92,7 +95,7 @@ function Register() {
 
         navigate("/login");
       } catch (error) {
-        toast.error(
+       setError(
           error.message
         );
       } finally {
@@ -214,7 +217,13 @@ function Register() {
                 className="input-field mt-3"
               />
             </div>
-
+                {
+                  error && (
+                    <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
+                      {error}
+                    </div>
+                  )
+                }
             {/* BUTTON */}
             <button
               type="submit"

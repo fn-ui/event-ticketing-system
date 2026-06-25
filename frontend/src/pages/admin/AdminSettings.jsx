@@ -61,7 +61,9 @@ function AdminSettings() {
           data.email || "",
       });
     } catch (error) {
-      console.error(error);
+      toast.error(
+      "Failed to load profile"
+       );
     }
   }
 
@@ -101,49 +103,73 @@ function AdminSettings() {
   }
 
   async function updatePassword(
-    e
+  e
+) {
+  e.preventDefault();
+
+  if (
+    !passwordData.password ||
+    !passwordData.confirmPassword
   ) {
-    e.preventDefault();
+    toast.error(
+      "Please fill all password fields"
+    );
 
-    if (
-      passwordData.password !==
-      passwordData.confirmPassword
-    ) {
-      toast.error(
-        "Passwords do not match"
-      );
-
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      const { error } =
-        await supabase.auth.updateUser(
-          {
-            password:
-              passwordData.password,
-          }
-        );
-
-      if (error)
-        throw error;
-
-      toast.success(
-        "Password updated successfully"
-      );
-
-      setPasswordData({
-        password: "",
-        confirmPassword: "",
-      });
-    } catch (error) {
-      toast.error(error.message);
-    } finally {
-      setLoading(false);
-    }
+    return;
   }
+
+  if (
+    passwordData.password.length <
+    6
+  ) {
+    toast.error(
+      "Password must be at least 6 characters"
+    );
+
+    return;
+  }
+
+  if (
+    passwordData.password !==
+    passwordData.confirmPassword
+  ) {
+    toast.error(
+      "Passwords do not match"
+    );
+
+    return;
+  }
+
+  try {
+    setLoading(true);
+
+    const { error } =
+      await supabase.auth.updateUser(
+        {
+          password:
+            passwordData.password,
+        }
+      );
+
+    if (error)
+      throw error;
+
+    toast.success(
+      "Password updated successfully"
+    );
+
+    setPasswordData({
+      password: "",
+      confirmPassword: "",
+    });
+  } catch (error) {
+    toast.error(
+      error.message
+    );
+  } finally {
+    setLoading(false);
+  }
+}
 
   return (
     <AdminLayout>

@@ -36,6 +36,9 @@ function Payments() {
     setLoadingMethod,
   ] = useState(null);
 
+  const [error, setError] =
+  useState("");
+
   /* ========================================
      VALIDATE BOOKING DATA
   ======================================== */
@@ -68,7 +71,7 @@ function Payments() {
           !user ||
           !profile
         ) {
-          toast.error(
+          setError(
             "Please login first"
           );
 
@@ -104,18 +107,7 @@ function Payments() {
             response
           );
 
-          /*
-            IMPORTANT:
-            Do NOT show payment success here.
-
-            STK Push only means the request
-            was sent to the phone.
-
-            User still needs to:
-            1. Enter PIN
-            2. Complete payment
-          */
-
+          
           toast.success(
             "STK Push sent successfully. Please check your phone and enter your M-Pesa PIN to complete payment."
           );
@@ -218,7 +210,7 @@ function Payments() {
           error
         );
 
-        toast.error(
+        setError(
           error.response?.data
             ?.message ||
             error.message ||
@@ -412,6 +404,16 @@ function Payments() {
             </button>
           </div>
 
+
+              {/* ERROR MESSAGE */}
+
+              {
+                error && (
+                  <div className="mt-8 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-semibold text-red-600">
+                    {error}
+                  </div>
+                )
+              }
           {/* LOADING */}
 
           {loadingMethod && (

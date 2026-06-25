@@ -54,24 +54,59 @@ function AdminEvents() {
   }
 
   async function handleDelete(
-    id
-  ) {
-    const confirmDelete =
-      window.confirm(
-        "Delete this event?"
-      );
+  id
+) {
+  toast(
+    (t) => (
+      <div className="flex flex-col gap-4">
+        <p className="font-semibold text-gray-800">
+          Delete this event?
+        </p>
 
-    if (!confirmDelete)
-      return;
+        <div className="flex gap-3">
+          <button
+            onClick={async () => {
+              toast.dismiss(t.id);
 
-    try {
-      await deleteEvent(id);
+              try {
+                await deleteEvent(
+                  id
+                );
 
-      fetchEvents();
-    } catch (error) {
-      toast.error(error.message);
+                toast.success(
+                  "Event deleted successfully"
+                );
+
+                fetchEvents();
+              } catch (error) {
+                toast.error(
+                  error.message
+                );
+              }
+            }}
+            className="rounded-xl bg-red-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-red-700"
+          >
+            Delete
+          </button>
+
+          <button
+            onClick={() =>
+              toast.dismiss(
+                t.id
+              )
+            }
+            className="rounded-xl bg-gray-200 px-4 py-2 text-sm font-bold text-gray-700 transition hover:bg-gray-300"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    ),
+    {
+      duration: 10000,
     }
-  }
+  );
+}
  async function handleUpdateEvent(
   updatedEvent
 ) {

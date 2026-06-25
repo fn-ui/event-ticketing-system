@@ -1,5 +1,5 @@
 import { useState } from "react";
-import toast from "react-hot-toast";
+
 import {
   Link,
   useNavigate,
@@ -23,6 +23,9 @@ function Login() {
   const [loading, setLoading] =
     useState(false);
 
+    const [error, setError] =
+  useState("");
+
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -34,7 +37,7 @@ function Login() {
   const handleSubmit =
     async (e) => {
       e.preventDefault();
-
+      setError("");
       try {
         setLoading(true);
 
@@ -67,7 +70,7 @@ function Login() {
           );
         }
       } catch (error) {
-        toast.error(
+        setError(
           error.message
         );
       } finally {
@@ -135,7 +138,13 @@ function Login() {
                 placeholder="Enter your password"
               />
             </div>
-
+                {
+                  error && (
+                    <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
+                      {error}
+                    </div>
+                  )
+                }
             <button
               type="submit"
               disabled={loading}

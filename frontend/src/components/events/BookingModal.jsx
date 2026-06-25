@@ -52,6 +52,12 @@ function BookingModal({
     setProcessing,
   ] = useState(false);
 
+  const [error, setError] =
+  useState("");
+
+  const [success, setSuccess] =
+  useState("");
+
   const total =
     tickets * event.price;
 
@@ -62,6 +68,9 @@ function BookingModal({
 
   const handleBooking =
     async () => {
+      setError("");
+      setSuccess("");
+
       if (loading) {
         return;
       }
@@ -70,7 +79,7 @@ function BookingModal({
         !user ||
         !profile
       ) {
-        toast.error(
+        setError(
        "Please login first"
          );
 
@@ -85,7 +94,7 @@ function BookingModal({
                 event.tickets_available <=
                 0
               ) {
-                toast.error(
+                setError(
                   "This event is sold out"
                 );
 
@@ -96,7 +105,7 @@ function BookingModal({
                 tickets >
                 event.tickets_available
               ) {
-                toast.error(
+                setError(
                   `Only ${event.tickets_available} tickets remaining`
                 );
 
@@ -143,7 +152,7 @@ function BookingModal({
           "Daraja"
         ) {
           if (!phone) {
-            toast.error(
+            setError(
               "Enter M-Pesa phone number"
             );
 
@@ -187,7 +196,7 @@ function BookingModal({
                 ?.CheckoutRequestID,
           });
 
-          toast.success(
+          setSuccess(
             "STK Push sent successfully. Check your phone and enter your M-Pesa PIN."
           );
 
@@ -344,7 +353,7 @@ function BookingModal({
       } catch (error) {
         console.error(error);
 
-        toast.error(
+        setError(
           error.response?.data
             ?.message ||
             error.message ||
@@ -508,6 +517,23 @@ function BookingModal({
           </div>
         </div>
 
+
+          {
+            error && (
+              <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-semibold text-red-600">
+                {error}
+              </div>
+            )
+          }
+
+          {
+            success && (
+              <div className="mt-6 rounded-2xl border border-green-200 bg-green-50 px-5 py-4 text-sm font-semibold text-green-600">
+                {success}
+              </div>
+            )
+          }
+          
         {/* BUTTON */}
 
         <button
