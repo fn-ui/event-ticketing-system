@@ -1,21 +1,11 @@
-import { useEffect } from "react";
-
 import { Link } from "react-router-dom";
 
-import { XCircle } from "lucide-react";
+import {
+  RefreshCcw,
+  XCircle,
+} from "lucide-react";
 
-function PaypalCancel() {
-  useEffect(() => {
-    const timer =
-      setTimeout(() => {
-        window.location.href =
-          "/events";
-      }, 4000);
-
-    return () =>
-      clearTimeout(timer);
-  }, []);
-
+function PaymentFailed() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-red-50 px-6">
       <div className="w-full max-w-md rounded-[32px] bg-white p-10 text-center shadow-xl">
@@ -26,20 +16,14 @@ function PaypalCancel() {
 
         {/* TITLE */}
         <h1 className="mt-8 text-4xl font-black text-red-600">
-          Payment Cancelled
+          Payment Failed
         </h1>
 
         {/* MESSAGE */}
         <p className="mt-4 leading-7 text-gray-500">
-          Your PayPal payment was
-          cancelled. No money was
-          charged.
-        </p>
-
-        {/* REDIRECT TEXT */}
-        <p className="mt-4 text-sm text-gray-400">
-          Redirecting to events in
-          4 seconds...
+          Your payment was not
+          completed or was declined.
+          No money was charged.
         </p>
 
         {/* BUTTONS */}
@@ -48,8 +32,10 @@ function PaypalCancel() {
             onClick={() =>
               window.history.back()
             }
-            className="rounded-2xl bg-violet-700 px-6 py-4 font-semibold text-white transition hover:bg-violet-800"
+            className="flex items-center justify-center gap-3 rounded-2xl bg-violet-700 px-6 py-4 font-semibold text-white transition hover:bg-violet-800"
           >
+            <RefreshCcw className="h-5 w-5" />
+
             Try Again
           </button>
 
@@ -65,4 +51,4 @@ function PaypalCancel() {
   );
 }
 
-export default PaypalCancel;
+export default PaymentFailed;

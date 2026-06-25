@@ -47,7 +47,7 @@ import PaypalSuccess from "../pages/PaypalSuccess";
 import PaypalCancel from "../pages/PaypalCancel";
 
 import PaymentSuccess from "../pages/PaymentSuccess";
-
+import PaymentFailed from "../pages/PaymentFailed";
 function AppRoutes() {
   return (
     <BrowserRouter>
@@ -198,6 +198,11 @@ function AppRoutes() {
         <Route
           path="/payment-success"
           element={<PaymentSuccess />}
+        />
+
+        <Route
+          path="/payment-failed"
+          element={<PaymentFailed />}
         />
       </Routes>
     </BrowserRouter>

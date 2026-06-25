@@ -46,6 +46,11 @@ export const initializePaystack =
 
             callback_url:
               "https://event-ticketing-system-lovat.vercel.app/payment-success",
+
+               metadata: {
+              cancel_action:
+                "https://event-ticketing-system-lovat.vercel.app/payment-failed",
+            },
           }
         );
 

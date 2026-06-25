@@ -490,7 +490,7 @@ function BookingModal({
             className="input-field mt-3"
           >
             <option>
-              Daraja
+              Mpesa
             </option>
 
             <option>
