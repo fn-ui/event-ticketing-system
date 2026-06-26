@@ -6,12 +6,12 @@ import {
   XCircle,
 } from "lucide-react";
 
-import axios from "axios";
-
 import {
   useSearchParams,
   Link,
 } from "react-router-dom";
+
+import api from "../services/api";
 
 import MainLayout from "../components/layout/MainLayout";
 
@@ -19,27 +19,37 @@ function PaypalSuccess() {
   const [searchParams] =
     useSearchParams();
 
+  const token =
+    searchParams.get(
+      "token"
+    );
+
   const [loading, setLoading] =
-    useState(true);
+    useState(
+      Boolean(token)
+    );
 
   const [success, setSuccess] =
     useState(false);
 
   const [message, setMessage] =
-    useState("");
+    useState(
+      token
+        ? ""
+        : "Missing PayPal transaction token."
+    );
 
   useEffect(() => {
-    const token =
-      searchParams.get(
-        "token"
-      );
+    if (!token) {
+      return;
+    }
 
     const capturePayment =
       async () => {
         try {
           const response =
-            await axios.post(
-              "https://event-ticketing-system-cror.onrender.com/api/paypal/capture",
+            await api.post(
+              "/paypal/capture",
               {
                 orderID:
                   token,
@@ -84,18 +94,8 @@ function PaypalSuccess() {
         }
       };
 
-    if (token) {
-      capturePayment();
-    } else {
-      setLoading(false);
-
-      setSuccess(false);
-
-      setMessage(
-        "Missing PayPal transaction token."
-      );
-    }
-  }, [searchParams]);
+    capturePayment();
+  }, [token]);
 
   return (
     <MainLayout>

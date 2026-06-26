@@ -1,11 +1,30 @@
 import { useEffect } from "react";
 
-import { Link } from "react-router-dom";
+import {
+  Link,
+  useSearchParams,
+} from "react-router-dom";
 
 import { XCircle } from "lucide-react";
 
+import { cancelPaypalPayment } from "../services/paymentService";
+
 function PaypalCancel() {
+  const [searchParams] =
+    useSearchParams();
+
   useEffect(() => {
+    const token =
+      searchParams.get(
+        "token"
+      );
+
+    if (token) {
+      cancelPaypalPayment(
+        token
+      );
+    }
+
     const timer =
       setTimeout(() => {
         window.location.href =
@@ -14,7 +33,7 @@ function PaypalCancel() {
 
     return () =>
       clearTimeout(timer);
-  }, []);
+  }, [searchParams]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-red-50 px-6">

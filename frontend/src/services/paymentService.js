@@ -49,7 +49,8 @@ export const processDarajaPayment =
       throw new Error(
         error.response?.data
           ?.message ||
-          "Daraja payment failed"
+          "Daraja payment failed",
+        { cause: error }
       );
     }
   };
@@ -97,7 +98,8 @@ export const initiateDarajaBooking =
       throw new Error(
         error.response?.data
           ?.message ||
-          "Daraja payment failed"
+          "Daraja payment failed",
+        { cause: error }
       );
     }
   };
@@ -113,7 +115,19 @@ export const processPaypalPayment =
         await api.post(
           "/paypal/create-order",
           {
-            amount:
+            userId:
+              bookingData.userId,
+
+            eventId:
+              bookingData.eventId,
+
+            eventTitle:
+              bookingData.eventTitle,
+
+            ticketQuantity:
+              bookingData.ticketQuantity,
+
+            totalAmount:
               bookingData.total,
           }
         );
@@ -138,7 +152,28 @@ export const processPaypalPayment =
       throw new Error(
         error.response?.data
           ?.message ||
-          "PayPal payment failed"
+          "PayPal payment failed",
+        { cause: error }
+      );
+    }
+  };
+
+/* ========================================
+   CANCEL PAYPAL ORDER
+======================================== */
+
+export const cancelPaypalPayment =
+  async (orderID) => {
+    try {
+      await api.post(
+        "/paypal/cancel",
+        { orderID }
+      );
+    } catch (error) {
+      console.error(
+        "PayPal cancel error:",
+        error.response?.data ||
+          error.message
       );
     }
   };
@@ -154,11 +189,23 @@ export const processPaystackPayment =
         await api.post(
           "/paystack/initialize",
           {
+            userId:
+              bookingData.userId,
+
+            eventId:
+              bookingData.eventId,
+
+            eventTitle:
+              bookingData.eventTitle,
+
+            ticketQuantity:
+              bookingData.ticketQuantity,
+
+            totalAmount:
+              bookingData.total,
+
             email:
               bookingData.email,
-
-            amount:
-              bookingData.total,
           }
         );
 
@@ -177,9 +224,24 @@ export const processPaystackPayment =
       throw new Error(
         error.response?.data
           ?.message ||
-          "Paystack payment failed"
+          "Paystack payment failed",
+        { cause: error }
       );
     }
+  };
+
+/* ========================================
+   VERIFY PAYSTACK PAYMENT
+======================================== */
+
+export const verifyPaystackPayment =
+  async (reference) => {
+    const response =
+      await api.get(
+        `/paystack/verify/${reference}`
+      );
+
+    return response.data;
   };
 
 /* ========================================
