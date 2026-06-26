@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import toast from "react-hot-toast";
 import api from "../../services/api";
 import {
   CreditCard,
@@ -15,13 +14,6 @@ import {
   processPaypalPayment,
   processPaystackPayment,
 } from "../../services/paymentService";
-
-import {
-  createBooking,
-  createPayment,
-  reduceTickets,
-  updateBookingStatus,
-} from "../../services/bookingService";
 
 import { useAuth } from "../../contexts/AuthContext";
 
@@ -355,184 +347,121 @@ function BookingModal({
                   }
 
                 /* ========================================
-                  CREATE BOOKING FIRST (PayPal / Paystack)
+                  PAYPAL PAYMENT
+
+                  The backend (service role key) owns
+                  creating the booking + payment rows
+                  and only marks the booking "completed"
+                  after PayPal confirms the capture - the
+                  browser never writes to Supabase for
+                  this flow.
                 ======================================== */
 
-                const booking =
-                  await createBooking({
-                    user_id: user.id,
+                if (
+                  paymentMethod ===
+                  "PayPal"
+                ) {
+                  paymentResponse =
+                    await processPaypalPayment(
+                      {
+                        userId:
+                          user.id,
 
-                    event_id: event.id,
+                        eventId:
+                          event.id,
 
-                    event_title:
-                      event.title,
+                        eventTitle:
+                          event.title,
 
-                    ticket_quantity:
-                      tickets,
+                        ticketQuantity:
+                          tickets,
 
-                    total_amount:
-                      total,
+                        total,
+                      }
+                    );
 
-                    payment_method:
-                      paymentMethod,
+                  console.log(
+                    "PayPal Response:",
+                    paymentResponse
+                  );
 
-                    transaction_id:
-                      null,
+                  const approvalUrl =
+                    paymentResponse
+                      ?.data
+                      ?.approval_url;
 
-                    status: "pending",
-                  });
+                  if (approvalUrl) {
+                    window.location.href =
+                      approvalUrl;
 
-        /* ========================================
-           PAYPAL PAYMENT
-        ======================================== */
+                    return;
+                  }
 
-        if (
-          paymentMethod ===
-          "PayPal"
-        ) {
-          paymentResponse =
-            await processPaypalPayment(
-              {
-                total,
-              }
-            );
+                  throw new Error(
+                    "PayPal checkout link not found"
+                  );
+                }
 
-          console.log(
-            "PayPal Response:",
-            paymentResponse
-          );
+                /* ========================================
+                   PAYSTACK PAYMENT
 
-          /* SAVE PAYMENT */
+                   The backend (service role key) owns
+                   creating the booking + payment rows
+                   and only marks the booking "completed"
+                   after Paystack verifies the transaction -
+                   the browser never writes to Supabase for
+                   this flow.
+                ======================================== */
 
-          await createPayment({
-            booking_id:
-              booking.id,
+                if (
+                  paymentMethod ===
+                  "Paystack"
+                ) {
+                  paymentResponse =
+                    await processPaystackPayment(
+                      {
+                        userId:
+                          user.id,
 
-              user_id:
-              user.id,
+                        eventId:
+                          event.id,
 
-            amount: total,
+                        eventTitle:
+                          event.title,
 
-            payment_method:
-              "PayPal",
+                        ticketQuantity:
+                          tickets,
 
-            status:
-              "completed",
+                        total,
 
-            transaction_id:
-              paymentResponse
-                ?.data
-                ?.orderID,
-          });
+                        email:
+                          user.email,
+                      }
+                    );
 
-          /* REDUCE TICKETS */
+                  console.log(
+                    "Paystack Response:",
+                    paymentResponse
+                  );
 
-          await reduceTickets(
-          event.id,
-          tickets
-            );
+                  const authorizationUrl =
+                    paymentResponse
+                      ?.data
+                      ?.authorization_url;
 
-          await updateBookingStatus(
-            booking.id,
-            "completed"
-          );
+                  if (
+                    authorizationUrl
+                  ) {
+                    window.location.href =
+                      authorizationUrl;
 
-          const approvalUrl =
-            paymentResponse?.data
-              ?.data
-              ?.approval_url ||
-            paymentResponse?.data
-              ?.approval_url;
+                    return;
+                  }
 
-          if (approvalUrl) {
-            window.location.href =
-              approvalUrl;
-
-            return;
-          }
-
-          throw new Error(
-            "PayPal checkout link not found"
-          );
-        }
-
-        /* ========================================
-           PAYSTACK PAYMENT
-        ======================================== */
-
-        if (
-          paymentMethod ===
-          "Paystack"
-        ) {
-          paymentResponse =
-            await processPaystackPayment(
-              {
-                total,
-                email:
-                  user.email,
-              }
-            );
-
-          console.log(
-            "Paystack Response:",
-            paymentResponse
-          );
-
-          /* SAVE PAYMENT */
-
-          await createPayment({
-            booking_id:
-              booking.id,
-
-              user_id:
-              user.id,
-
-            amount: total,
-
-            payment_method:
-              "Paystack",
-
-            status:
-              "completed",
-
-            transaction_id:
-              paymentResponse
-                ?.data
-                ?.reference,
-          });
-
-          /* REDUCE TICKETS */
-
-          await reduceTickets(
-            event.id,
-            tickets
-          );
-
-          await updateBookingStatus(
-            booking.id,
-            "completed"
-          );
-
-          const authorizationUrl =
-            paymentResponse?.data
-              ?.data
-              ?.authorization_url ||
-            paymentResponse?.data
-              ?.authorization_url;
-
-          if (
-            authorizationUrl
-          ) {
-            window.location.href =
-              authorizationUrl;
-
-            return;
-          }
-
-          throw new Error(
-            "Paystack checkout link not found"
-          );
-        }
+                  throw new Error(
+                    "Paystack checkout link not found"
+                  );
+                }
       } catch (error) {
         console.error(error);
 
