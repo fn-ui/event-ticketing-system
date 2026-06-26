@@ -136,6 +136,37 @@ export const getAllBookings =
   };
 
 /* ========================================
+   UPDATE BOOKING STATUS
+======================================== */
+
+export const updateBookingStatus =
+  async (
+    bookingId,
+    status
+  ) => {
+    const {
+      data,
+      error,
+    } = await supabase
+      .from("bookings")
+      .update({ status })
+      .eq("id", bookingId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error(
+        "Update booking status error:",
+        error
+      );
+
+      throw error;
+    }
+
+    return data;
+  };
+
+/* ========================================
    CREATE PAYMENT
 ======================================== */
 

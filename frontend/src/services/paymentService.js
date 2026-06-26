@@ -55,6 +55,54 @@ export const processDarajaPayment =
   };
 
 /* ========================================
+   DARAJA BOOKING + CHECKOUT
+
+   Backend owns the booking/payment writes
+   (service role key) - the browser only
+   gets back IDs to poll with, it never
+   touches the bookings/payments tables.
+======================================== */
+
+export const initiateDarajaBooking =
+  async ({
+    userId,
+    eventId,
+    eventTitle,
+    ticketQuantity,
+    totalAmount,
+    phone,
+  }) => {
+    try {
+      const response =
+        await api.post(
+          "/daraja/checkout",
+          {
+            userId,
+            eventId,
+            eventTitle,
+            ticketQuantity,
+            totalAmount,
+            phone,
+          }
+        );
+
+      return response.data;
+    } catch (error) {
+      console.error(
+        "Daraja checkout error:",
+        error.response?.data ||
+          error.message
+      );
+
+      throw new Error(
+        error.response?.data
+          ?.message ||
+          "Daraja payment failed"
+      );
+    }
+  };
+
+/* ========================================
    PAYPAL PAYMENT
 ======================================== */
 

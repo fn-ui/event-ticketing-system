@@ -138,7 +138,7 @@ export function AuthProvider({
         .from("profiles")
         .select("*")
         .eq("id", userId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error(

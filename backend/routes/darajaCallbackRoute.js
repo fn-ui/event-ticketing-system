@@ -1,7 +1,8 @@
 import express from "express";
 
-import { supabase }
-  from "../config/supabase.js";
+import {
+  finalizePayment,
+} from "../services/paymentFinalizer.js";
 
 const router =
   express.Router();
@@ -130,41 +131,21 @@ router.post(
            UPDATE PAYMENT STATUS
         ======================================== */
 
-        const {
-          error:
-            updateError,
-        } =
-          await supabase
-            .from(
-              "payments"
-            )
-            .update({
-              status:
-                "completed",
-
+        const finalized =
+          await finalizePayment(
+            checkoutRequestID,
+            "completed",
+            {
               mpesa_receipt:
                 mpesaReceipt,
-            })
-            .eq(
-              "transaction_id",
-              checkoutRequestID
-            );
-
-        if (
-          updateError
-        ) {
-          console.log(
-            "SUPABASE UPDATE ERROR:"
+            }
           );
 
-          console.log(
-            updateError
-          );
-        } else {
-          console.log(
-            "PAYMENT UPDATED TO COMPLETED"
-          );
-        }
+        console.log(
+          finalized
+            ? "PAYMENT UPDATED TO COMPLETED"
+            : "PAYMENT ALREADY FINALIZED (status query likely won the race)"
+        );
       }
 
       /* ========================================
@@ -194,38 +175,17 @@ router.post(
            UPDATE FAILED STATUS
         ======================================== */
 
-        const {
-          error:
-            failedUpdateError,
-        } =
-          await supabase
-            .from(
-              "payments"
-            )
-            .update({
-              status:
-                "failed",
-            })
-            .eq(
-              "transaction_id",
-              checkoutRequestID
-            );
-
-        if (
-          failedUpdateError
-        ) {
-          console.log(
-            "FAILED STATUS UPDATE ERROR:"
+        const finalized =
+          await finalizePayment(
+            checkoutRequestID,
+            "failed"
           );
 
-          console.log(
-            failedUpdateError
-          );
-        } else {
-          console.log(
-            "PAYMENT UPDATED TO FAILED"
-          );
-        }
+        console.log(
+          finalized
+            ? "PAYMENT UPDATED TO FAILED"
+            : "PAYMENT ALREADY FINALIZED (status query likely won the race)"
+        );
       }
 
       /* ========================================

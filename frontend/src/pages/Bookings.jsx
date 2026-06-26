@@ -201,8 +201,24 @@ function Bookings() {
                             </h2>
                           </div>
 
-                          <span className="badge-success">
-                            Payment Completed
+                          <span
+                            className={
+                              booking.status ===
+                              "completed"
+                                ? "badge-success"
+                                : booking.status ===
+                                  "failed"
+                                ? "badge-failed"
+                                : "badge-pending"
+                            }
+                          >
+                            {booking.status ===
+                            "completed"
+                              ? "Payment Completed"
+                              : booking.status ===
+                                "failed"
+                              ? "Payment Failed"
+                              : "Payment Pending"}
                           </span>
 
                           <p className="max-w-xs break-all text-sm text-gray-500">

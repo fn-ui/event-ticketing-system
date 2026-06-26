@@ -2,10 +2,29 @@ import axios from "axios";
 
 /* ========================================
    GENERATE ACCESS TOKEN
+
+   Daraja tokens are valid for ~1 hour.
+   Calling this on every STK push / query
+   (as before) burns through Safaricom's
+   sandbox rate limit for no reason - cache
+   it and only refresh once it's close to
+   expiring.
 ======================================== */
+
+let cachedToken = null;
+
+let cachedTokenExpiresAt = 0;
 
 export const generateDarajaToken =
   async () => {
+    if (
+      cachedToken &&
+      Date.now() <
+        cachedTokenExpiresAt
+    ) {
+      return cachedToken;
+    }
+
     try {
       const consumerKey =
         process.env
@@ -42,8 +61,23 @@ export const generateDarajaToken =
         "TOKEN GENERATED SUCCESSFULLY"
       );
 
-      return response.data
-        .access_token;
+      cachedToken =
+        response.data
+          .access_token;
+
+      const expiresInSeconds =
+        Number(
+          response.data
+            .expires_in
+        ) || 3600;
+
+      /* refresh 2 minutes before actual expiry */
+      cachedTokenExpiresAt =
+        Date.now() +
+        (expiresInSeconds - 120) *
+          1000;
+
+      return cachedToken;
     } catch (error) {
       console.log(
         "TOKEN ERROR:"
@@ -191,6 +225,8 @@ export const stkPushService =
               formattedPhone,
 
             CallBackURL:
+              process.env
+                .DARAJA_CALLBACK_URL ||
               "https://event-ticketing-system-cror.onrender.com/api/daraja/callback",
 
             AccountReference:
@@ -230,4 +266,70 @@ export const stkPushService =
 
       throw error;
     }
+  };
+
+/* ========================================
+   STK PUSH QUERY SERVICE
+
+   Daraja's callback (especially on the
+   sandbox host) can be delayed or never
+   arrive. This actively asks Safaricom for
+   the real status of a CheckoutRequestID
+   instead of only waiting on the callback.
+======================================== */
+
+export const stkPushQueryService =
+  async (checkoutRequestID) => {
+    const shortcode =
+      process.env
+        .DARAJA_SHORTCODE;
+
+    const passkey =
+      process.env
+        .DARAJA_PASSKEY;
+
+    const token =
+      await generateDarajaToken();
+
+    const timestamp =
+      new Date()
+        .toISOString()
+        .replace(
+          /[^0-9]/g,
+          ""
+        )
+        .slice(0, 14);
+
+    const password =
+      Buffer.from(
+        `${shortcode}${passkey}${timestamp}`
+      ).toString("base64");
+
+    const response =
+      await axios.post(
+        "https://sandbox.safaricom.co.ke/mpesa/stkpushquery/v1/query",
+        {
+          BusinessShortCode:
+            shortcode,
+
+          Password:
+            password,
+
+          Timestamp:
+            timestamp,
+
+          CheckoutRequestID:
+            checkoutRequestID,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+
+            "Content-Type":
+              "application/json",
+          },
+        }
+      );
+
+    return response.data;
   };

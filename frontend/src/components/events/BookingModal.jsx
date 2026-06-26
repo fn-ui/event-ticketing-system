@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import api from "../../services/api";
@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 
 import {
-  processDarajaPayment,
+  initiateDarajaBooking,
   processPaypalPayment,
   processPaystackPayment,
 } from "../../services/paymentService";
@@ -20,6 +20,7 @@ import {
   createBooking,
   createPayment,
   reduceTickets,
+  updateBookingStatus,
 } from "../../services/bookingService";
 
 import { useAuth } from "../../contexts/AuthContext";
@@ -53,6 +54,16 @@ function BookingModal({
     setProcessing,
   ] = useState(false);
 
+  const [
+    awaitingPayment,
+    setAwaitingPayment,
+  ] = useState(false);
+
+  const [
+    pollAttempt,
+    setPollAttempt,
+  ] = useState(0);
+
   const [error, setError] =
   useState("");
 
@@ -62,7 +73,44 @@ function BookingModal({
   const total =
     tickets * event.price;
 
-  
+  const pollIntervalRef =
+    useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (
+        pollIntervalRef.current
+      ) {
+        clearInterval(
+          pollIntervalRef.current
+        );
+      }
+    };
+  }, []);
+
+
+  /* ========================================
+     CANCEL WAITING FOR PAYMENT
+  ======================================== */
+
+  const handleCancelWaiting =
+    () => {
+      if (
+        pollIntervalRef.current
+      ) {
+        clearInterval(
+          pollIntervalRef.current
+        );
+
+        pollIntervalRef.current =
+          null;
+      }
+
+      setAwaitingPayment(false);
+
+      onClose();
+    };
+
   /* ========================================
      HANDLE BOOKING
   ======================================== */
@@ -71,6 +119,8 @@ function BookingModal({
     async () => {
       setError("");
       setSuccess("");
+      setAwaitingPayment(false);
+      setPollAttempt(0);
 
       if (loading) {
         return;
@@ -119,34 +169,13 @@ function BookingModal({
                 let paymentResponse;
 
                 /* ========================================
-                  CREATE BOOKING FIRST
-                ======================================== */
-
-                              const booking =
-                await createBooking({
-                  user_id: user.id,
-
-                  event_id: event.id,
-
-                  event_title:
-                    event.title,
-
-                  ticket_quantity:
-                    tickets,
-
-                  total_amount:
-                    total,
-
-                  payment_method:
-                    paymentMethod,
-
-                  transaction_id:
-                    null,
-
-                 status: "pending",
-                });
-                /* ========================================
                     DARAJA PAYMENT
+
+                    The backend (service role key) owns
+                    creating the booking + payment rows
+                    and initiating the STK push - the
+                    browser never writes to Supabase for
+                    this flow.
                   ======================================== */
 
                   if (
@@ -163,56 +192,71 @@ function BookingModal({
                       return;
                     }
 
-                    paymentResponse =
-                      await processDarajaPayment({
-                        total,
+                    const checkout =
+                      await initiateDarajaBooking({
+                        userId: user.id,
+                        eventId: event.id,
+                        eventTitle:
+                          event.title,
+                        ticketQuantity:
+                          tickets,
+                        totalAmount: total,
                         phone,
                       });
 
                     console.log(
-                      "Daraja Response:",
-                      paymentResponse
+                      "Daraja Checkout:",
+                      checkout
                     );
 
                     const checkoutRequestID =
-                      paymentResponse
-                       
+                      checkout
                         ?.checkoutRequestId;
 
-                    /* SAVE PAYMENT */
-console.log(
-  "CHECKOUT REQUEST ID:",
-  checkoutRequestID
-);
-                    await createPayment({
-                      booking_id:
-                        booking.id,
+                    if (!checkoutRequestID) {
+                      throw new Error(
+                        "Failed to start M-Pesa payment"
+                      );
+                    }
 
-                      user_id:
-                        user.id,
+                    setSuccess("");
 
-                      amount: total,
-
-                      payment_method:
-                        "Daraja",
-
-                      status: "pending",
-
-                      transaction_id:
-                        checkoutRequestID,
-                    });
-
-                    setSuccess(
-                      "STK Push sent. Enter your M-Pesa PIN on your phone."
+                    setAwaitingPayment(
+                      true
                     );
+
+                    setPollAttempt(0);
 
                     /* ========================================
                       START PAYMENT STATUS CHECKING
+
+                      Daraja's callback can be delayed
+                      or never arrive (sandbox is known
+                      to be unreliable), so the backend
+                      status endpoint actively queries
+                      Safaricom instead of waiting on it.
+                      Safaricom's sandbox rate-limits the
+                      query API to 5 requests/60s (~1 every
+                      12s) - 10s intervals run slightly
+                      above that, so repeated rapid testing
+                      can still trip the spike-arrest limit.
+                      Still cap the polling so the modal
+                      can't hang open forever.
                     ======================================== */
 
-                    const interval =
+                    let pollAttempts = 0;
+
+                    const MAX_POLL_ATTEMPTS = 12; // ~2 minutes at 10s intervals
+
+                    pollIntervalRef.current =
                       setInterval(
                         async () => {
+                          pollAttempts += 1;
+
+                          setPollAttempt(
+                            pollAttempts
+                          );
+
                           try {
                             const response =
                               await api.get(
@@ -234,17 +278,23 @@ console.log(
                               "completed"
                             ) {
                               clearInterval(
-                                interval
+                                pollIntervalRef.current
                               );
 
-                              await reduceTickets(
-                                event.id,
-                                tickets
+                              pollIntervalRef.current =
+                                null;
+
+                              setAwaitingPayment(
+                                false
                               );
+
+                              onClose();
 
                               navigate(
                                 "/payment-success?method=daraja"
                               );
+
+                              return;
                             }
 
                             /* FAILED */
@@ -254,22 +304,84 @@ console.log(
                               "failed"
                             ) {
                               clearInterval(
-                                interval
+                                pollIntervalRef.current
                               );
+
+                              pollIntervalRef.current =
+                                null;
+
+                              setAwaitingPayment(
+                                false
+                              );
+
+                              onClose();
 
                               navigate(
                                 "/payment-failed?method=daraja"
                               );
+
+                              return;
                             }
                           } catch (error) {
                             console.log(error);
                           }
+
+                          /* TIMEOUT */
+
+                          if (
+                            pollAttempts >=
+                            MAX_POLL_ATTEMPTS
+                          ) {
+                            clearInterval(
+                              pollIntervalRef.current
+                            );
+
+                            pollIntervalRef.current =
+                              null;
+
+                            setAwaitingPayment(
+                              false
+                            );
+
+                            setError(
+                              "We couldn't confirm your M-Pesa payment yet. If you completed the prompt on your phone, check 'My Bookings' in a few minutes - it will update automatically once Safaricom confirms it."
+                            );
+                          }
                         },
-                        5000
+                        10000
                       );
 
                     return;
                   }
+
+                /* ========================================
+                  CREATE BOOKING FIRST (PayPal / Paystack)
+                ======================================== */
+
+                const booking =
+                  await createBooking({
+                    user_id: user.id,
+
+                    event_id: event.id,
+
+                    event_title:
+                      event.title,
+
+                    ticket_quantity:
+                      tickets,
+
+                    total_amount:
+                      total,
+
+                    payment_method:
+                      paymentMethod,
+
+                    transaction_id:
+                      null,
+
+                    status: "pending",
+                  });
+
         /* ========================================
            PAYPAL PAYMENT
         ======================================== */
@@ -319,6 +431,11 @@ console.log(
           event.id,
           tickets
             );
+
+          await updateBookingStatus(
+            booking.id,
+            "completed"
+          );
 
           const approvalUrl =
             paymentResponse?.data
@@ -389,6 +506,11 @@ console.log(
           await reduceTickets(
             event.id,
             tickets
+          );
+
+          await updateBookingStatus(
+            booking.id,
+            "completed"
           );
 
           const authorizationUrl =
@@ -484,149 +606,209 @@ console.log(
           </div>
         </div>
 
-        {/* TICKETS */}
+        {awaitingPayment ? (
+          /* ========================================
+             WAITING FOR M-PESA CONFIRMATION
+          ======================================== */
 
-        <div className="mt-8">
-          <label className="font-bold text-gray-700">
-            Number of Tickets
-          </label>
+          <div className="mt-8 flex flex-col items-center rounded-[28px] bg-violet-50 p-10 text-center">
+            <div className="relative flex h-20 w-20 items-center justify-center">
+              <span className="absolute inline-flex h-20 w-20 animate-ping rounded-full bg-violet-400 opacity-50" />
 
-          <input
-            type="number"
-            min="1"
-            max={
-              event.tickets_available
-            }
-            value={tickets}
-            onChange={(e) =>
-              setTickets(
-                Number(
-                  e.target.value
-                )
-              )
-            }
-            className="input-field mt-3"
-          />
-        </div>
+              <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-violet-700">
+                <Smartphone className="h-8 w-8 text-white" />
+              </div>
+            </div>
 
-        {/* PHONE */}
+            <h3 className="mt-6 text-2xl font-black text-gray-900">
+              Check Your Phone
+            </h3>
 
-        {paymentMethod ===
-          "Daraja" && (
-          <div className="mt-8">
-            <label className="font-bold text-gray-700">
-              M-Pesa Phone Number
-            </label>
+            <p className="mt-3 max-w-sm text-gray-500">
+              Enter your M-Pesa PIN on{" "}
+              <span className="font-semibold text-gray-700">
+                {phone}
+              </span>{" "}
+              to pay KES {total}.
+            </p>
 
-            <input
-              type="text"
-              placeholder="254712345678"
-              value={phone}
-              onChange={(e) =>
-                setPhone(
-                  e.target.value
+            <div className="mt-6 flex items-center gap-2 text-violet-700">
+              <Loader2 className="h-5 w-5 animate-spin" />
+
+              <span className="font-semibold">
+                Waiting for confirmation
+                {pollAttempt > 0
+                  ? ` (${pollAttempt * 10}s)`
+                  : ""}
+                ...
+              </span>
+            </div>
+
+            <button
+              onClick={
+                handleCancelWaiting
+              }
+              className="mt-8 text-sm font-semibold text-gray-400 transition hover:text-gray-600"
+            >
+              Close (check "My Bookings" later)
+            </button>
+          </div>
+        ) : (
+          <>
+            {/* TICKETS */}
+
+            <div className="mt-8">
+              <label className="font-bold text-gray-700">
+                Number of Tickets
+              </label>
+
+              <input
+                type="number"
+                min="1"
+                max={
+                  event.tickets_available
+                }
+                value={tickets}
+                disabled={
+                  processing
+                }
+                onChange={(e) =>
+                  setTickets(
+                    Number(
+                      e.target.value
+                    )
+                  )
+                }
+                className="input-field mt-3"
+              />
+            </div>
+
+            {/* PHONE */}
+
+            {paymentMethod ===
+              "Daraja" && (
+              <div className="mt-8">
+                <label className="font-bold text-gray-700">
+                  M-Pesa Phone Number
+                </label>
+
+                <input
+                  type="text"
+                  placeholder="254712345678"
+                  value={phone}
+                  disabled={
+                    processing
+                  }
+                  onChange={(e) =>
+                    setPhone(
+                      e.target.value
+                    )
+                  }
+                  className="input-field mt-3"
+                />
+              </div>
+            )}
+
+            {/* PAYMENT METHOD */}
+
+            <div className="mt-8">
+              <label className="font-bold text-gray-700">
+                Payment Method
+              </label>
+
+              <select
+                value={
+                  paymentMethod
+                }
+                disabled={
+                  processing
+                }
+                onChange={(e) =>
+                  setPaymentMethod(
+                    e.target.value
+                  )
+                }
+                className="input-field mt-3"
+              >
+                <option value="Daraja">
+                  M-Pesa
+                </option>
+
+                <option>
+                  PayPal
+                </option>
+
+                 <option value="Paystack">
+                  Paystack
+                </option>
+              </select>
+            </div>
+
+            {/* TOTAL */}
+
+            <div className="mt-8 rounded-[28px] bg-violet-50 p-8">
+              <div className="flex items-center justify-between">
+                <h3 className="text-2xl font-black text-gray-900">
+                  Total Amount
+                </h3>
+
+                <h3 className="text-4xl font-black text-violet-700">
+                  KES {total}
+                </h3>
+              </div>
+            </div>
+
+
+              {
+                error && (
+                  <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-semibold text-red-600">
+                    {error}
+                  </div>
                 )
               }
-              className="input-field mt-3"
-            />
-          </div>
-        )}
 
-        {/* PAYMENT METHOD */}
+              {
+                success && (
+                  <div className="mt-6 rounded-2xl border border-green-200 bg-green-50 px-5 py-4 text-sm font-semibold text-green-600">
+                    {success}
+                  </div>
+                )
+              }
 
-        <div className="mt-8">
-          <label className="font-bold text-gray-700">
-            Payment Method
-          </label>
+            {/* BUTTON */}
 
-          <select
-            value={
-              paymentMethod
-            }
-            onChange={(e) =>
-              setPaymentMethod(
-                e.target.value
-              )
-            }
-            className="input-field mt-3"
-          >
-            <option value="Daraja">
-              M-Pesa
-            </option>
+            <button
+              onClick={
+                handleBooking
+              }
+              disabled={processing}
+              className="primary-btn mt-8 flex w-full items-center justify-center"
+            >
+              {processing ? (
+                <>
+                  <Loader2 className="mr-3 h-5 w-5 animate-spin" />
 
-            <option>
-              PayPal
-            </option>
-
-             <option value="Paystack">
-              Paystack
-            </option>
-          </select>
-        </div>
-
-        {/* TOTAL */}
-
-        <div className="mt-8 rounded-[28px] bg-violet-50 p-8">
-          <div className="flex items-center justify-between">
-            <h3 className="text-2xl font-black text-gray-900">
-              Total Amount
-            </h3>
-
-            <h3 className="text-4xl font-black text-violet-700">
-              KES {total}
-            </h3>
-          </div>
-        </div>
-
-
-          {
-            error && (
-              <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-semibold text-red-600">
-                {error}
-              </div>
-            )
-          }
-
-          {
-            success && (
-              <div className="mt-6 rounded-2xl border border-green-200 bg-green-50 px-5 py-4 text-sm font-semibold text-green-600">
-                {success}
-              </div>
-            )
-          }
-          
-        {/* BUTTON */}
-
-        <button
-          onClick={
-            handleBooking
-          }
-          disabled={processing}
-          className="primary-btn mt-8 flex w-full items-center justify-center"
-        >
-          {processing ? (
-            <>
-              <Loader2 className="mr-3 h-5 w-5 animate-spin" />
-
-              Processing...
-            </>
-          ) : (
-            <>
-              {paymentMethod ===
-              "Daraja" ? (
-                <Smartphone className="mr-3 h-5 w-5" />
-              ) : paymentMethod ===
-                "Paystack" ? (
-                <Wallet className="mr-3 h-5 w-5" />
+                  Processing...
+                </>
               ) : (
-                <CreditCard className="mr-3 h-5 w-5" />
-              )}
+                <>
+                  {paymentMethod ===
+                  "Daraja" ? (
+                    <Smartphone className="mr-3 h-5 w-5" />
+                  ) : paymentMethod ===
+                    "Paystack" ? (
+                    <Wallet className="mr-3 h-5 w-5" />
+                  ) : (
+                    <CreditCard className="mr-3 h-5 w-5" />
+                  )}
 
-              Pay with{" "}
-              {paymentMethod}
-            </>
-          )}
-        </button>
+                  Pay with{" "}
+                  {paymentMethod}
+                </>
+              )}
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
