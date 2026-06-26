@@ -15,12 +15,18 @@ export const generateDarajaToken =
         process.env
           .DARAJA_CONSUMER_SECRET;
 
-     
+      /* ========================================
+         GENERATE AUTH STRING
+      ======================================== */
 
       const auth =
         Buffer.from(
           `${consumerKey}:${consumerSecret}`
         ).toString("base64");
+
+      /* ========================================
+         REQUEST TOKEN
+      ======================================== */
 
       const response =
         await axios.get(
@@ -33,8 +39,7 @@ export const generateDarajaToken =
         );
 
       console.log(
-        "TOKEN SUCCESS:",
-        response.data
+        "TOKEN GENERATED SUCCESSFULLY"
       );
 
       return response.data
@@ -54,7 +59,7 @@ export const generateDarajaToken =
   };
 
 /* ========================================
-   STK PUSH
+   STK PUSH SERVICE
 ======================================== */
 
 export const stkPushService =
@@ -64,18 +69,22 @@ export const stkPushService =
   }) => {
     try {
       console.log(
-        "STK PUSH START"
+        "========== STK PUSH START =========="
       );
 
       console.log(
-        "Phone:",
+        "PHONE:",
         phone
       );
 
       console.log(
-        "Amount:",
+        "AMOUNT:",
         amount
       );
+
+      /* ========================================
+         ENV VARIABLES
+      ======================================== */
 
       const shortcode =
         process.env
@@ -85,19 +94,52 @@ export const stkPushService =
         process.env
           .DARAJA_PASSKEY;
 
+      /* ========================================
+         ACCESS TOKEN
+      ======================================== */
+
       const token =
         await generateDarajaToken();
 
-      /* FORMAT PHONE */
-      const formattedPhone =
-        phone.startsWith("0")
-          ? phone.replace(
-              /^0/,
-              "254"
-            )
-          : phone;
+      /* ========================================
+         FORMAT PHONE
+      ======================================== */
 
-      /* GENERATE TIMESTAMP */
+      let formattedPhone =
+        phone.trim();
+
+      if (
+        formattedPhone.startsWith(
+          "0"
+        )
+      ) {
+        formattedPhone =
+          formattedPhone.replace(
+            /^0/,
+            "254"
+          );
+      }
+
+      if (
+        formattedPhone.startsWith(
+          "+"
+        )
+      ) {
+        formattedPhone =
+          formattedPhone.substring(
+            1
+          );
+      }
+
+      console.log(
+        "FORMATTED PHONE:",
+        formattedPhone
+      );
+
+      /* ========================================
+         GENERATE TIMESTAMP
+      ======================================== */
+
       const timestamp =
         new Date()
           .toISOString()
@@ -107,20 +149,25 @@ export const stkPushService =
           )
           .slice(0, 14);
 
-      /* GENERATE PASSWORD */
+      /* ========================================
+         GENERATE PASSWORD
+      ======================================== */
+
       const password =
         Buffer.from(
           `${shortcode}${passkey}${timestamp}`
         ).toString("base64");
 
-     
+      /* ========================================
+         STK PUSH REQUEST
+      ======================================== */
 
       const response =
         await axios.post(
           "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest",
           {
             BusinessShortCode:
-              "174379",
+              shortcode,
 
             Password:
               password,
@@ -138,28 +185,32 @@ export const stkPushService =
               formattedPhone,
 
             PartyB:
-              "174379",
+              shortcode,
 
             PhoneNumber:
               formattedPhone,
- 
+
             CallBackURL:
-          "https://event-ticketing-system-cror.onrender.com/api/daraja/callback",
+              "https://event-ticketing-system-cror.onrender.com/api/daraja/callback",
+
             AccountReference:
               "EventPay",
 
             TransactionDesc:
-              "Event Payment",
+              "Event Ticket Payment",
           },
           {
             headers: {
               Authorization: `Bearer ${token}`,
+
+              "Content-Type":
+                "application/json",
             },
           }
         );
 
       console.log(
-        "STK RESPONSE:"
+        "========== STK RESPONSE =========="
       );
 
       console.log(
@@ -169,7 +220,7 @@ export const stkPushService =
       return response.data;
     } catch (error) {
       console.log(
-        "FULL DARAJA ERROR:"
+        "========== STK PUSH ERROR =========="
       );
 
       console.log(

@@ -45,7 +45,7 @@ export const initializePaystack =
             amount,
 
             callback_url:
-              "https://event-ticketing-system-lovat.vercel.app/payment-success",
+              "https://event-ticketing-system-lovat.vercel.app/payment-success?method=paystack",
 
                metadata: {
               cancel_action:

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import api from "../../services/api";
 import {
   CreditCard,
   Loader2,
@@ -142,73 +143,133 @@ function BookingModal({
                   transaction_id:
                     null,
 
-                  status: "completed",
+                 status: "pending",
                 });
                 /* ========================================
-                  DARAJA PAYMENT
-                ======================================== */
-       if (
-          paymentMethod ===
-          "Daraja"
-        ) {
-          if (!phone) {
-            setError(
-              "Enter M-Pesa phone number"
-            );
+                    DARAJA PAYMENT
+                  ======================================== */
 
-            setProcessing(false);
+                  if (
+                    paymentMethod ===
+                    "Daraja"
+                  ) {
+                    if (!phone) {
+                      setError(
+                        "Enter M-Pesa phone number"
+                      );
 
-            return;
-          }
+                      setProcessing(false);
 
-          paymentResponse =
-            await processDarajaPayment(
-              {
-                total,
-                phone,
-              }
-            );
+                      return;
+                    }
 
-          console.log(
-            "Daraja Response:",
-            paymentResponse
-          );
+                    paymentResponse =
+                      await processDarajaPayment({
+                        total,
+                        phone,
+                      });
 
-          /* SAVE PAYMENT */
+                    console.log(
+                      "Daraja Response:",
+                      paymentResponse
+                    );
 
-          await createPayment({
-            booking_id:
-              booking.id,
+                    const checkoutRequestID =
+                      paymentResponse
+                       
+                        ?.checkoutRequestId;
 
-              user_id:
-              user.id,
+                    /* SAVE PAYMENT */
+console.log(
+  "CHECKOUT REQUEST ID:",
+  checkoutRequestID
+);
+                    await createPayment({
+                      booking_id:
+                        booking.id,
 
-            amount: total,
+                      user_id:
+                        user.id,
 
-            payment_method:
-              "Daraja",
+                      amount: total,
 
-            status: "completed",
+                      payment_method:
+                        "Daraja",
 
-            transaction_id:
-              paymentResponse
-                ?.data
-                ?.CheckoutRequestID,
-          });
+                      status: "pending",
 
-          setSuccess(
-            "STK Push sent successfully. Check your phone and enter your M-Pesa PIN."
-          );
+                      transaction_id:
+                        checkoutRequestID,
+                    });
 
-          setTimeout(() => {
-            navigate(
-              "/payment-success"
-            );
-          }, 2000);
+                    setSuccess(
+                      "STK Push sent. Enter your M-Pesa PIN on your phone."
+                    );
 
-          return;
-        }
+                    /* ========================================
+                      START PAYMENT STATUS CHECKING
+                    ======================================== */
 
+                    const interval =
+                      setInterval(
+                        async () => {
+                          try {
+                            const response =
+                              await api.get(
+                                `/daraja/status/${checkoutRequestID}`
+                              );
+
+                            console.log(
+                              "PAYMENT STATUS:",
+                              response.data
+                            );
+
+                            const payment =
+                              response.data;
+
+                            /* SUCCESS */
+
+                            if (
+                              payment.status ===
+                              "completed"
+                            ) {
+                              clearInterval(
+                                interval
+                              );
+
+                              await reduceTickets(
+                                event.id,
+                                tickets
+                              );
+
+                              navigate(
+                                "/payment-success?method=daraja"
+                              );
+                            }
+
+                            /* FAILED */
+
+                            if (
+                              payment.status ===
+                              "failed"
+                            ) {
+                              clearInterval(
+                                interval
+                              );
+
+                              navigate(
+                                "/payment-failed?method=daraja"
+                              );
+                            }
+                          } catch (error) {
+                            console.log(error);
+                          }
+                        },
+                        5000
+                      );
+
+                    return;
+                  }
         /* ========================================
            PAYPAL PAYMENT
         ======================================== */
@@ -489,15 +550,15 @@ function BookingModal({
             }
             className="input-field mt-3"
           >
-            <option>
-              Mpesa
+            <option value="Daraja">
+              M-Pesa
             </option>
 
             <option>
               PayPal
             </option>
 
-            <option>
+             <option value="Paystack">
               Paystack
             </option>
           </select>

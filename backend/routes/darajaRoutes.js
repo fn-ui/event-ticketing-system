@@ -1,8 +1,10 @@
 import express from "express";
-
+import { supabase }
+  from "../config/supabase.js";
 import {
-  stkPushService,
-} from "../services/darajaService.js";
+  testDaraja,
+  initiateSTKPush,
+} from "../controllers/darajaController.js";
 
 const router =
   express.Router();
@@ -13,53 +15,68 @@ const router =
 
 router.get(
   "/test",
-  (req, res) => {
-    res.json({
-      success: true,
-      message:
-        "Daraja route working",
-    });
-  }
+  testDaraja
 );
 
 /* ========================================
-   REAL STK PUSH
+   STK PUSH ROUTE
 ======================================== */
 
 router.post(
   "/stkpush",
+  initiateSTKPush
+);
+
+/* ========================================
+   CHECK PAYMENT STATUS
+======================================== */
+
+router.get(
+  "/status/:transactionId",
   async (req, res) => {
     try {
       const {
-        phone,
-        amount,
-      } = req.body;
+        transactionId,
+      } = req.params;
 
-      const response =
-        await stkPushService({
-          phone,
-          amount,
-        });
+      const {
+        data,
+        error,
+      } = await supabase
+        .from("payments")
+        .select("*")
+        .eq(
+          "transaction_id",
+          transactionId
+        )
+        .single();
+
+      if (error) {
+        return res
+          .status(404)
+          .json({
+            success: false,
+
+            message:
+              "Payment not found",
+          });
+      }
 
       return res.status(200).json(
-        response
+        data
       );
     } catch (error) {
-      console.error(
-        error.response?.data ||
-          error.message
-      );
+      console.log(error);
 
       return res.status(500).json({
         success: false,
+
         message:
-          "STK Push failed",
-        error:
-          error.response?.data ||
-          error.message,
+          "Failed to fetch payment status",
       });
     }
   }
 );
 
 export default router;
+

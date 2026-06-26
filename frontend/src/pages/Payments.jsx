@@ -84,36 +84,40 @@ function Payments() {
 
         let response;
 
-        /* ========================================
-           DARAJA PAYMENT
-        ======================================== */
+            /* ========================================
+            DARAJA PAYMENT
+          ======================================== */
 
-        if (
-          method === "daraja"
-        ) {
-          response =
-            await processDarajaPayment(
-              {
-                phone:
-                  bookingData.phone,
+          if (
+            method === "daraja"
+          ) {
+            response =
+              await processDarajaPayment(
+                {
+                  phone:
+                    bookingData.phone,
 
-                total:
-                  bookingData.total,
-              }
+                  total:
+                    bookingData.total,
+                }
+              );
+
+            console.log(
+              "Daraja Response:",
+              response
             );
 
-          console.log(
-            "Daraja Response:",
-            response
-          );
+            /*
+              DO NOT redirect yet.
+              Wait for user to enter PIN on phone.
+            */
 
-          
-          toast.success(
-            "STK Push sent successfully. Please check your phone and enter your M-Pesa PIN to complete payment."
-          );
+            toast.success(
+              "STK Push sent. Please enter your M-Pesa PIN on your phone."
+            );
 
-          return;
-        }
+            return;
+          }
 
         /* ========================================
            PAYPAL PAYMENT

@@ -2,22 +2,32 @@ import {
   stkPushService,
 } from "../services/darajaService.js";
 
+/* ========================================
+   TEST CONTROLLER
+======================================== */
+
 export const testDaraja =
   async (req, res) => {
     try {
       res.status(200).json({
         success: true,
+
         message:
           "Daraja controller working",
       });
     } catch (error) {
       res.status(500).json({
         success: false,
+
         message:
           error.message,
       });
     }
   };
+
+/* ========================================
+   INITIATE STK PUSH
+======================================== */
 
 export const initiateSTKPush =
   async (req, res) => {
@@ -28,30 +38,57 @@ export const initiateSTKPush =
       } = req.body;
 
       console.log(
-        "DARAAJA REQUEST:",
+        "DARAJA REQUEST:",
         req.body
       );
+
+      /* ========================================
+         VALIDATION
+      ======================================== */
+
+      if (
+        !phone ||
+        !amount
+      ) {
+        return res.status(400).json({
+          success: false,
+
+          message:
+            "Phone and amount are required",
+        });
+      }
+
+      /* ========================================
+         INITIATE STK PUSH
+      ======================================== */
 
       const response =
         await stkPushService({
           phone,
+
           amount,
         });
 
       console.log(
-        "DARAAJA SUCCESS:",
+        "DARAJA SUCCESS:",
         response
       );
 
-      res.status(200).json({
+      /* ========================================
+         RETURN RESPONSE
+      ======================================== */
+
+      return res.status(200).json({
         success: true,
+
         message:
-          "STK Push initiated",
+          "STK Push initiated successfully",
+
         data: response,
       });
     } catch (error) {
       console.log(
-        "DARAAJA CONTROLLER ERROR:"
+        "DARAJA CONTROLLER ERROR:"
       );
 
       console.log(
@@ -59,12 +96,14 @@ export const initiateSTKPush =
           error.message
       );
 
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
+
         message:
           error.response?.data
             ?.errorMessage ||
-          error.message,
+          error.message ||
+          "Failed to initiate STK Push",
       });
     }
   };

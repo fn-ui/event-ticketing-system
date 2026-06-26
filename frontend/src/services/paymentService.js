@@ -21,11 +21,24 @@ export const processDarajaPayment =
           }
         );
 
-      return {
-        success: true,
-        method: "Daraja",
-        data: response.data,
-      };
+                return {
+            success:
+              response.data
+                ?.ResponseCode ===
+              "0",
+
+            method: "Daraja",
+
+            message:
+              response.data
+                ?.CustomerMessage,
+
+            checkoutRequestId:
+              response.data
+                ?.CheckoutRequestID,
+
+            data: response.data,
+          };
     } catch (error) {
       console.error(
         "Daraja payment error:",
@@ -267,3 +280,37 @@ export async function updatePaymentStatus(
 
   return data;
 }
+
+/* ========================================
+   CHECK PAYMENT STATUS
+======================================== */
+
+export const checkPaymentStatus =
+  async (
+    transactionId
+  ) => {
+    try {
+      const { data, error } =
+        await supabase
+          .from("payments")
+          .select("status")
+          .eq(
+            "transaction_id",
+            transactionId
+          )
+          .single();
+
+      if (error) {
+        throw error;
+      }
+
+      return data.status;
+    } catch (error) {
+      console.error(
+        "Check payment status error:",
+        error
+      );
+
+      return "pending";
+    }
+  };
