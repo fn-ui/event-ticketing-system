@@ -113,12 +113,7 @@ export const initiateSTKPush =
 
 /* ========================================
    CREATE BOOKING + INITIATE STK PUSH
-
-   Owns the whole booking/payment write path
-   server-side (service role key) so the
-   browser never touches the bookings or
-   payments tables directly.
-======================================== */
+  ======================================== */
 
 export const createDarajaCheckout =
   async (req, res) => {
